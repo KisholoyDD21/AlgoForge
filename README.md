@@ -1,266 +1,327 @@
 # AlgoForge
 
-**AlgoForge 0.4.0** is an independent, pattern-first DSA practice platform. It combines a multi-platform metadata catalogue with original AlgoForge exercises, an isolated code-judging integration, learning roadmaps, progress tracking and scheduled practice contests.
+[![CI](https://github.com/KisholoyDD21/AlgoForge/actions/workflows/ci.yml/badge.svg)](https://github.com/KisholoyDD21/AlgoForge/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
 
-This repository is a production-oriented application foundation, not a claim that a public service has already been deployed or that every third-party platform feature is replicated. Read [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) before launch.
+AlgoForge is an independent, pattern-first workspace for studying data structures and algorithms. It brings together a searchable, source-linked question catalogue, original exercises, a coding workspace, progress tracking, learning paths, and scheduled practice contests.
 
-## Current contents
+> **Project status:** AlgoForge is a development-stage application, not a deployed or security-certified public service. The included production configuration is a starting point for an operator to harden and validate. Complete the [production readiness checklist](IMPLEMENTATION_STATUS.md) before inviting public users.
 
-See [CHANGELOG.md](CHANGELOG.md) for the 0.4.0 release changes and [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for tested features versus remaining launch requirements.
+## Screenshots
 
-- Responsive desktop/mobile interface, dark/light theme, landing page, dashboard, problem explorer, patterns, roadmaps, playground, submissions, bookmarks, profile, contests, problem discussions, moderation console and draft legal pages.
-- FastAPI + SQLAlchemy backend with local SQLite and production PostgreSQL configuration.
-- Account registration/login, scrypt password hashes, HTTP-only session cookies, expiry and role checks.
-- User profile/timezone, progress, bookmarks, personal notes, submissions and daily activity/streak persistence.
-- A **159-record initial catalogue**: 140 metadata-only third-party links across LeetCode, CSES, Codeforces, HackerRank, AtCoder and CodeChef, plus 19 original AlgoForge problems.
-- **77 platform-owned test cases** for the 19 original problems. Full hidden inputs/outputs remain private; only marked sample test output can be returned to a learner.
-- Full-test-suite verdict workflow for original problems through a separate Judge0 CE-compatible service: Accepted, Wrong Answer, compilation/runtime/time-limit errors and measured time/memory.
-- Professional problem workspace with Monaco editor, resizable statement/editor panes, custom test cases, per-case result cards, one-click full-suite submissions, and C/C++/Java/Python support.
-- Code autosave to browser storage for guests and account-synchronised drafts for signed-in learners, with up to 30 previous snapshots and restore controls.
-- Function-signature execution mode for four AlgoForge-original problems (Running Sum, Maximum Pair Sum, Binary Search Index and Missing Number) in C, C++, Java and Python; other original problems retain their documented stdin/stdout interface until their signatures are configured.
-- Advanced DSA analytics: total active days, contribution counts, pattern and topic mastery, attempted weak areas, last-seven-day reports with previous-week comparison, 7/14-day consistency and practice recommendations.
-- A simple learning-completion projection based on the last 14 days of recorded completions. It is a trend estimate, not a guarantee; externally self-reported completions may contribute to this metric.
-- Complexity feedback that separates a low-confidence static estimate, expected approach complexity and Judge0's measured execution metrics.
-- Scheduled contests with registration, server-side start/end enforcement, problem release at start and scoring/penalty leaderboard.
-- Admin-protected original-problem create/update/delete operations. Existing problems with submissions, contest references or learner progress cannot be deleted; problems with submissions cannot have their judging suite rewritten.
-- Daily challenge, achievements, profile timezone, bookmarks and personal notes.
-- Authenticated problem threads, replies, voting, reporting, author deletion and admin hide/unhide moderation.
-- Account deletion explicitly removes the user's community content and all children attached to threads they authored.
-- Redis-backed shared rate limiting in production; development fallback is process-local.
-- PostgreSQL, Redis and optional Caddy HTTPS Compose services, migrations, CI tests and operational documentation.
+| Landing page | Problem library |
+|---|---|
+| ![AlgoForge landing page](docs/screenshots/welcome.png) | ![Searchable and filterable problem library](docs/screenshots/problem-set.png) |
 
-## Quick start: Windows PowerShell
+| Learning paths | Coding workspace |
+|---|---|
+| ![Structured AlgoForge learning paths](docs/screenshots/learning-paths.png) | ![Problem statement, code editor, test controls, and custom cases](docs/screenshots/coding-workspace.png) |
 
-Requirements: Python 3.11+ (Python 3.12 is used in the Docker image).
+Screenshots are representative UI captures. Code execution requires a reachable, compatible Judge0 service; the production Judge0 deployment is not included in this repository.
+
+## Features
+
+- **Problem discovery:** search and filter by difficulty, topic, pattern, source platform, and progress.
+- **Pattern-first learning:** reusable DSA patterns, learning paths, daily challenges, and recommendations.
+- **Coding workspace:** C, C++, Java, and Python templates; Monaco editor with a text-editor fallback; custom input/output cases; and resizable statement/editor panes.
+- **Code drafts:** browser autosave for guests; user-scoped synchronization and version history for signed-in accounts.
+- **Original problem judging:** asynchronous submissions against platform-owned tests through a separately deployed Judge0-compatible service. Hidden tests are not sent to the browser.
+- **Progress and analytics:** solved status, activity, streaks, bookmarks, notes, achievements, pattern/topic mastery, weekly reports, and cautious completion-pace estimates.
+- **Contests and community:** scheduled contests, scoreboards, problem discussions, replies, votes, reports, and admin moderation.
+- **Administration:** protected problem and contest authoring, moderation, and safeguards for content with existing submissions or learner progress.
+- **Operations foundation:** FastAPI, SQLAlchemy, Alembic migrations, SQLite for local development, PostgreSQL and Redis for production, Docker Compose, optional Caddy TLS, and GitHub Actions CI.
+
+The application does not reproduce third-party problem statements or claim official integrations with those platforms. See [catalogue and content boundaries](#catalogue-and-content-rights).
+
+## Contents
+
+- [Requirements](#requirements)
+- [Run locally](#run-locally)
+- [Run with Docker Compose](#run-with-docker-compose)
+- [Production deployment](#production-deployment)
+- [Configuration](#configuration)
+- [Catalogue and content rights](#catalogue-and-content-rights)
+- [Code execution and judging](#code-execution-and-judging)
+- [Tests and checks](#tests-and-checks)
+- [Health checks and API](#health-checks-and-api)
+- [Security, privacy, and operations](#security-privacy-and-operations)
+- [Project structure](#project-structure)
+- [Contributing and support](#contributing-and-support)
+- [License](#license)
+
+## Requirements
+
+For local development:
+
+- Python 3.11 or later (CI and the container image use Python 3.12).
+- Git.
+- Windows PowerShell on Windows; a POSIX-compatible shell on macOS/Linux.
+- Optional: Node.js 22 to run the frontend JavaScript syntax check.
+
+For Docker:
+
+- Docker Engine and the Docker Compose v2 plugin.
+
+For real code execution, configure a separate Judge0 CE-compatible service. It is not bundled with the application Compose stack.
+
+## Run locally
+
+### Windows PowerShell
+
+From the repository directory:
 
 ```powershell
-# Extract the ZIP, open the algoforge folder in VS Code, then run:
 .\run_local.ps1
-
-# Or use the manual commands below when you want to manage the environment yourself:
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
-Copy-Item .env.example .env
-alembic upgrade head
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Open <http://localhost:8000>. In development only, a demo account is created automatically:
+The helper creates `.venv`, installs development dependencies, copies `.env.example` to `.env` if needed, applies database migrations, and starts the development server on `127.0.0.1:8000`.
+
+If your PowerShell execution policy blocks the helper, run it with a process-scoped policy override:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\run_local.ps1
+```
+
+Or manage setup manually:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+Copy-Item .env.example .env
+python -m alembic upgrade head
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+### macOS and Linux
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+cp .env.example .env
+python -m alembic upgrade head
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). The API documentation is available at [http://127.0.0.1:8000/api/docs](http://127.0.0.1:8000/api/docs) in development mode only.
+
+In development, the app creates a demo account:
 
 ```text
 Email:    demo@algoforge.dev
 Password: demo-pass-123
 ```
 
-Never use the demo account or development cookie settings in production. The demo account is not created when `APP_ENV=production`.
+This account is never created in production. Do not reuse these credentials or development secrets outside a local environment. The `.env` file and local SQLite database are ignored by Git; keep them that way.
 
-## Quick start: Docker Compose
+The development environment template points at the public shared Judge0 CE endpoint as a convenience. Code and standard input you submit there leave your machine and are handled by a third party. Do not send sensitive or proprietary code to that endpoint. Set `JUDGE0_URL` to an empty value to disable execution until you have a service you control.
 
-Set strong URL-safe `POSTGRES_PASSWORD` and `REDIS_PASSWORD` values in `.env` (separate long random hex values are suitable), then run:
+## Run with Docker Compose
+
+Create the environment file and replace the database and Redis placeholders with **different** strong, random secrets:
+
+```bash
+cp .env.example .env
+```
+
+Then start the local stack:
 
 ```bash
 docker compose up --build -d
+docker compose ps
+docker compose logs -f web
 ```
 
-The local Compose stack starts the application, PostgreSQL and password-protected Redis. The web container is published on `127.0.0.1:8000`; it is not directly exposed on every network interface. Open <http://localhost:8000>.
+The default profile starts the app, PostgreSQL, and password-protected Redis. The web service is bound to `127.0.0.1:8000`; it is not published on every network interface. Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-## The question catalogue and 500-question target
+Stop the services with `docker compose down`. Add `--volumes` only if you intentionally want to delete the persistent PostgreSQL data.
 
-The initial database seed contains 159 records:
+## Production deployment
 
-| Source | Records | Content treatment |
-|---|---:|---|
-| LeetCode | 102 | Metadata and official links only |
-| CSES | 16 | Metadata and official links only |
-| Codeforces | 10 | Metadata and official links only |
-| HackerRank | 5 | Metadata and official links only |
-| AtCoder | 4 | Metadata and official links only |
-| CodeChef | 3 | Metadata and official links only |
-| AlgoForge Originals | 19 | Original statements and platform-owned test cases |
-| **Total** | **159** | |
+The provided Compose configuration is for a Linux host with Docker Compose v2. It is not a managed hosting deployment or a substitute for an operations/security review.
 
-The target overall catalogue is **150 Easy / 250 Medium / 100 Hard (500 total)**. The current seeded distribution is 59 Easy / 79 Medium / 21 Hard. The importer fills the shortfall using rating/tag metadata from the official Codeforces `problemset.problems` API; it does not copy problem statements, examples, editorials or private tests.
+### Before deployment
 
-Run from a machine with outbound HTTPS access to Codeforces:
+1. Use a maintained Linux host, review the Docker images and dependencies, and create a staging environment.
+2. Point the production DNS name to the host. Allow inbound TCP ports 80 and 443 for Caddy's certificate and HTTPS traffic.
+3. Generate unique secrets for PostgreSQL, Redis, the first administrator, and Judge0 authentication. Keep them in a secret manager or protected deployment environment, not in source control.
+4. Configure a dedicated HTTPS Judge0 service. Restrict its network access and worker egress; do not run untrusted submissions inside the AlgoForge API container.
+5. Complete every applicable item in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), review [SECURITY.md](SECURITY.md), and follow the [Judge0 deployment and security runbook](docs/JUDGE0_DEPLOYMENT.md).
 
-```bash
-python scripts/import_codeforces.py
-```
+### Required production configuration
 
-For Docker:
-
-```bash
-docker compose exec web python scripts/import_codeforces.py
-```
-
-The importer is safe to rerun and skips existing slugs. It exits with a non-zero status if the official API is unreachable. Ratings are mapped into AlgoForge's own difficulty buckets: Easy up to 1100, Medium 1101–1800 and Hard above 1800. These are product-side classifications, not equivalent to another platform's difficulty labels. The importer uses a single public API request; Codeforces' published API guidance should be checked before expanding or scheduling repeated imports.
-
-**Important:** The 500 target is a metadata discovery set, not 500 problems with rehosted statements or AlgoForge hidden tests. Official problem statements and judging remain on the source sites unless AlgoForge has explicit rights to host them. Read [docs/DATA_LICENSING.md](docs/DATA_LICENSING.md).
-
-## Professional coding workspace
-
-Open an AlgoForge-original problem to use the split problem/editor workspace. The splitter can be dragged with a mouse or adjusted with the arrow keys; Home and End move to the minimum and maximum panel widths. The width is remembered in local storage on that browser.
-
-Four original problems currently provide function-style interfaces in all four supported languages:
-
-| Problem | C++ / Java / Python / C method |
-|---|---|
-| Running Sum | `runningSum` |
-| Maximum Pair Sum | `maxPairSum` |
-| Binary Search Index | `search` |
-| Missing Number | `missingNumber` |
-
-Each signature has a trusted input/output adapter which is appended server-side. The adapters are explicit and problem-specific; other originals and metadata-only external problems use standard input/output mode. Custom test cases may include an optional expected output. When supplied, each case is compared and displayed individually; without an expected output it is shown as executed, not passed. Full private-suite submission is a separate action and is the only way to earn an AlgoForge Accepted verdict.
-
-Code is autosaved locally for guests and synchronised to a user-scoped draft for signed-in users. The History button lists snapshots and allows restoration. Signed-in snapshots are capped at 30 per draft. Do not store passwords, API keys or other secrets in draft code.
-
-## Advanced DSA analytics
-
-The Analytics page uses actual account records rather than sample values:
-
-- **Total Active Days:** distinct local calendar dates with at least one recorded solved contribution.
-- **Contributions:** total newly recorded problem completions across those dates. Repeatedly opening or resubmitting an already-solved problem does not inflate this count.
-- Pattern/topic mastery: solved problems divided by all catalogue entries with that tag.
-- Weak patterns and topics: only attempted categories below the 60% mastery threshold are flagged; untouched categories are not mislabelled as weak.
-- Weekly report and 7/14-day consistency: derived from per-day activity rows, with the current seven-day period compared to the previous seven days.
-- Recommendations: unfinished questions prioritised toward weak patterns and accessible difficulty.
-- Learning prediction: a simple 14-day solve-velocity estimate, not a guarantee or AI forecast.
-
-The UI intentionally does not hardcode an example like `238` active days or `203` contributions. Those totals belong to each account and will start low for a new account, then increase from recorded activity. External-platform completions are self-reported; original-platform completions are recorded only after an Accepted AlgoForge judge verdict.
-
-## Enable code execution and problem judging
-
-The application never executes submitted code in the FastAPI process. The development `.env.example` points to the shared Judge0 CE endpoint for convenience. This is subject to third-party rate limits and availability. For production, deploy a separate private Judge0 CE-compatible service and set these values in `.env`:
-
-```dotenv
-JUDGE0_URL=https://your-private-judge-host.example
-JUDGE0_TOKEN=your-server-side-token
-JUDGE0_LANGUAGE_C=103
-JUDGE0_LANGUAGE_CPP=105
-JUDGE0_LANGUAGE_JAVA=91
-JUDGE0_LANGUAGE_PYTHON=109
-JUDGE0_TIMEOUT_SECONDS=25
-```
-
-Language IDs depend on the exact Judge0 deployment. These defaults match the public Judge0 CE v1.13.1 language listing checked on 30 October 2026 (C 103, C++ 105, Java 91, Python 109); **verify `/languages` on your own judge before accepting submissions**. Production startup also requires `JUDGE0_TOKEN` and a Judge0 instance configured with `AUTHN_HEADER=X-Auth-Token` / `AUTHN_TOKEN`. The application exposes:
-
-- `GET /api/judge/health`
-- `GET /api/judge/languages`
-
-The API sends per-case CPU, wall-time, memory, stack and process limits. It creates asynchronous submissions, polls results and returns only sample stdout/stderr. Hidden case input/output is never included in public problem APIs or student responses.
-
-When you copy `.env.example`, the playground can use the shared CE endpoint for development after checking that your local server can reach it. Do not use that public endpoint for a public production platform. The initial catalogue's third-party records are not judgeable on AlgoForge. Only original AlgoForge problems have owned test suites and can return a genuine AlgoForge Accepted verdict. Function-style mode is currently configured for Running Sum, Maximum Pair Sum, Binary Search Index and Missing Number; other original problems use stdin/stdout. A custom test run with no expected output is an execution result, not a judged pass, and never awards a solved mark.
-
-**Production rule:** Deploy Judge0 on a dedicated, isolated Linux host or secured private environment. Restrict network access so untrusted code cannot reach the AlgoForge API, PostgreSQL, Redis, cloud metadata services or the public internet. Do not treat the public Judge0 CE endpoint as a production SLA or a security boundary under your control. Review the official deployment guide in [docs/JUDGE0_DEPLOYMENT.md](docs/JUDGE0_DEPLOYMENT.md).
-
-## Production deployment on a VPS
-
-This Compose setup expects a Linux VPS with Docker Engine and Docker Compose v2. It is not a one-click managed hosting deploy.
-
-1. Point a DNS A/AAAA record for your domain to the VPS and allow inbound TCP 80/443.
-2. Set the production values in `.env`. Use separate random secrets for PostgreSQL, Redis and Judge0; production startup rejects an unauthenticated Redis URL or a Judge0 URL without a server-side API token:
+Set at least the following values in the server's environment or protected `.env` file. Values shown below are placeholders, not usable secrets:
 
 ```dotenv
 APP_ENV=production
-POSTGRES_PASSWORD=long-random-url-safe-secret
 PUBLIC_DOMAIN=practice.example.com
 PUBLIC_BASE_URL=https://practice.example.com
 COOKIE_SECURE=true
+
+POSTGRES_PASSWORD=<unique-long-random-secret>
+REDIS_PASSWORD=<different-unique-long-random-secret>
+
 BOOTSTRAP_ADMIN_EMAIL=admin@example.com
-BOOTSTRAP_ADMIN_PASSWORD=a-long-unique-password
-JUDGE0_URL=https://your-private-judge-host.example
-JUDGE0_TOKEN=server-side-token
-REDIS_PASSWORD=separate-long-random-secret
+BOOTSTRAP_ADMIN_PASSWORD=<unique-password-of-at-least-16-characters>
+
+JUDGE0_URL=https://judge.internal.example
+JUDGE0_TOKEN=<server-side-judge0-token>
 ```
 
-3. Set the four `JUDGE0_LANGUAGE_*` values for the deployed judge.
-4. Start the app, database, Redis and Caddy reverse proxy:
+Compose constructs the PostgreSQL and Redis connection URLs from `POSTGRES_PASSWORD` and `REDIS_PASSWORD`. Do not expose those credentials to the browser. Confirm the language IDs against the `/languages` response from your own Judge0 service before accepting submissions.
+
+Start the app, database, Redis, and optional Caddy HTTPS proxy:
 
 ```bash
 docker compose --profile production up --build -d
+docker compose ps
+docker compose logs -f web caddy
 ```
 
-5. Sign in with the bootstrap admin, confirm `/api/judge/health`, create and test one original problem, and then remove `BOOTSTRAP_ADMIN_PASSWORD` from the environment and restart the web service. Keep the admin credentials in a secret manager, not in Git.
-6. Configure managed backups for PostgreSQL and a separate backup/restore drill. Monitor Judge0 workers, queue depth, CPU/memory saturation, web errors and Redis health.
+Caddy provisions certificates when DNS and inbound connectivity are correct. Verify the app and judge health endpoints over HTTPS, complete a staging acceptance test, and confirm that backups can be restored before opening the service to users.
 
-Caddy obtains and renews certificates automatically when DNS and ports are configured correctly. The Compose web port remains loopback-only; Caddy proxies through the internal Compose network. Review proxy trust and network access before putting the host behind another CDN or load balancer.
+Use the bootstrap administrator credentials for the initial setup and store them securely. After setup, remove `BOOTSTRAP_ADMIN_PASSWORD` from the deployment environment and recreate the web service with `docker compose --profile production up -d web` so the running container no longer has the bootstrap secret. Keep the database and Redis private to the Compose network. If deploying outside Compose, configure PostgreSQL, password-authenticated Redis, HTTPS, proxy trust, migrations, and startup health checks explicitly.
 
-## Admin operations
+### Ongoing operations
 
-Create the first admin through environment variables before startup (`BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD`). Admin endpoints require the admin role.
+- Automate encrypted PostgreSQL backups and perform documented restore drills.
+- Monitor application errors, database and Redis availability, disk, CPU/memory, Judge0 queue depth, worker failures, and unusual submission volume.
+- Patch the OS, application dependencies, container images, and Judge0/compiler images; rehearse upgrades and rollback in staging.
+- Define retention and deletion procedures for accounts, discussions, code drafts, submissions, and Judge0 data.
+- Restrict administrative access and rotate secrets after staff changes or suspected exposure.
+- Do not treat a successful health check as proof of secure sandboxing, adequate capacity, or legal compliance.
 
-- `GET /api/admin/summary`
-- `GET /api/admin/problems`
-- `POST /api/admin/problems`
-- `PUT /api/admin/problems/{slug}`
-- `DELETE /api/admin/problems/{slug}`
-- `POST /api/admin/contests`
+## Configuration
 
-Problem authoring requires a full statement, at least two test cases, and at least one sample case. Test case inputs and expected outputs are private except for cases explicitly marked `sample: true`. Once a problem has submissions, updating its judge suite is blocked to preserve historical verdict integrity.
+See [.env.example](.env.example) for the full template. Important settings:
 
-## Useful commands
+| Variable | Purpose | Production requirement |
+|---|---|---|
+| `APP_ENV` | Selects development or production guards. | Set to `production`. |
+| `DATABASE_URL` | SQLAlchemy database connection. | PostgreSQL (`postgresql+psycopg://...`). Compose supplies it from `POSTGRES_PASSWORD`. |
+| `POSTGRES_PASSWORD` | PostgreSQL credential used by Compose. | Unique, strong secret. |
+| `REDIS_URL` | Shared rate-limit store. | Authenticated Redis URL. Compose builds it from `REDIS_PASSWORD`. |
+| `REDIS_PASSWORD` | Redis credential used by Compose. | Unique, strong secret; do not reuse the database password. |
+| `PUBLIC_BASE_URL` | Canonical external origin used in links and sitemap. | HTTPS URL. |
+| `PUBLIC_DOMAIN` | Hostname used by the optional Caddy profile. | Must resolve to the deployment host. |
+| `COOKIE_SECURE` | Secure session-cookie flag. | Production forces secure cookies; serve the site over HTTPS. |
+| `SESSION_TTL_DAYS` | Session lifetime; defaults to 7 days. | Choose and document a suitable policy. |
+| `BOOTSTRAP_ADMIN_EMAIL` | Email for creating the initial administrator. | Required when no administrator exists. |
+| `BOOTSTRAP_ADMIN_PASSWORD` | Initial administrator password. | At least 16 characters; remove after bootstrap. |
+| `JUDGE0_URL` | Judge0-compatible API base URL. | Private/contracted HTTPS service; the shared public endpoint is rejected in production. |
+| `JUDGE0_TOKEN` | Server-side Judge0 API token. | Required in production; never place it in frontend code. |
+| `JUDGE0_LANGUAGE_C`, `JUDGE0_LANGUAGE_CPP`, `JUDGE0_LANGUAGE_JAVA`, `JUDGE0_LANGUAGE_PYTHON` | Compiler runtime IDs. | Verify against the deployed instance's `/languages` response. |
+| `JUDGE0_TIMEOUT_SECONDS` | Judge request timeout; defaults to 20 seconds, clamped to 5–60. | Tune to the service and workload. |
+
+Production startup fails closed unless PostgreSQL, HTTPS `PUBLIC_BASE_URL`, authenticated Redis, a non-public HTTPS Judge0 endpoint, and Judge0 authentication are configured. Never commit `.env`, private keys, tokens, database dumps, or user data.
+
+## Catalogue and content rights
+
+The default seed contains **159 records**:
+
+| Source | Records | Stored content |
+|---|---:|---|
+| LeetCode | 102 | Metadata and official links |
+| CSES | 16 | Metadata and official links |
+| Codeforces | 10 | Metadata and official links |
+| HackerRank | 5 | Metadata and official links |
+| AtCoder | 4 | Metadata and official links |
+| CodeChef | 3 | Metadata and official links |
+| AlgoForge Originals | 19 | Original statements and platform-owned test suites |
+| **Total** | **159** | |
+
+The initial difficulty distribution is 59 Easy, 79 Medium, and 21 Hard. A 500-record target (150 Easy / 250 Medium / 100 Hard) is an optional catalogue goal, **not the current seed size**. The importer can add public Codeforces metadata:
 
 ```bash
-# Apply schema migrations
-alembic upgrade head
-
-# Run tests
-pytest -q
-
-# Static checks
-python -m compileall -q app scripts migrations
-node --check app/static/app.js
-
-# API health and Judge0 integration checks
-curl http://localhost:8000/api/health
-curl http://localhost:8000/api/judge/health
-curl http://localhost:8000/api/judge/languages
-
-# Expand the metadata catalogue
 python scripts/import_codeforces.py
+# Or, with the Compose stack running:
+docker compose exec web python scripts/import_codeforces.py
 ```
+
+It uses the official Codeforces problemset API, skips existing slugs, and does not copy statements, examples, editorials, or private tests. Difficulty buckets are AlgoForge classifications based on rating, not labels endorsed by the source platforms. Review API terms and usage limits before importing or scheduling repeated requests.
+
+Third-party entries are discovery links only. Original statements, examples, and judging tests remain with their respective platforms unless AlgoForge has explicit rights to host them. Read [docs/DATA_LICENSING.md](docs/DATA_LICENSING.md); that guidance is not legal advice.
+
+## Code execution and judging
+
+AlgoForge sends source code and selected input to a separately operated Judge0-compatible service. The API does not execute learner code inside its own process. The default development template references the public shared CE endpoint for convenience; it is not controlled by AlgoForge and is not suitable as a production service.
+
+Only AlgoForge-original problems have AlgoForge-owned full test suites. Third-party catalogue entries link to their source platforms and cannot earn an AlgoForge Accepted verdict. Hidden case inputs and expected outputs are not returned to clients. A custom case with no expected output is shown as executed, not passed, and never marks a problem solved.
+
+Function-style adapters are available for four original problems—Running Sum, Maximum Pair Sum, Binary Search Index, and Missing Number—in C, C++, Java, and Python. Other problems currently use standard input/output mode.
+
+For production, deploy and secure a dedicated Judge0 CE-compatible service, verify its compiler IDs, configure authentication, and restrict worker network access. The app's requested runtime/resource limits are not a complete host-level sandbox policy. See [docs/JUDGE0_DEPLOYMENT.md](docs/JUDGE0_DEPLOYMENT.md).
+
+## Tests and checks
+
+Run the same core checks used by CI:
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m compileall -q app scripts migrations
+python -m alembic upgrade head
+pytest -q
+node --check app/static/app.js
+```
+
+The GitHub Actions workflow runs tests, Python compilation, a clean SQLite migration check, and the JavaScript syntax check. The local `alembic upgrade head` command uses the database configured by `DATABASE_URL`; use a disposable database when validating migrations.
+
+## Health checks and API
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/health` | Application/database health and catalogue count. |
+| `GET /api/judge/health` | Judge0 configuration and reachability. |
+| `GET /api/judge/languages` | Compiler runtimes reported by Judge0. |
+| `/api/docs` | Interactive API docs; enabled in development only. |
+| `/robots.txt`, `/sitemap.xml` | Search-engine discovery endpoints. |
+
+API groups include authentication, problems and patterns, dashboard and analytics, progress/bookmarks/notes, drafts and version history, code runs and judging, contests, discussions, and administration. The backend routes are defined in [app/main.py](app/main.py). The landing and legal pages are server-delivered; most signed-in views are a client-rendered single-page application, not full server-side rendering.
+
+## Security, privacy, and operations
+
+- Never expose Judge0 worker services or the database to untrusted networks. Never run submissions inside the AlgoForge web container.
+- Treat user code and standard input as untrusted data. Do not submit secrets or confidential code to the public shared Judge0 endpoint.
+- Use HTTPS, authenticated Redis, unique secrets, least-privilege access, patched dependencies, encrypted backups, and tested recovery procedures.
+- The included Privacy and Terms pages are draft templates. Operators must add their legal identity, contact details, subprocessors, retention rules, user-rights processes, and jurisdiction-specific terms before launch.
+- Email verification, password recovery, OAuth, MFA, customer-support workflows, external platform account synchronization, and production monitoring are not configured in this release.
+- In-app analytics are derived from recorded practice activity. Some third-party completions are self-reported, so they are not necessarily verified submissions. Learning completion projections are simple pace estimates, not guarantees or AI predictions.
+
+Review [SECURITY.md](SECURITY.md) for private vulnerability reporting and [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for the complete implemented/not-complete list. Do not report vulnerabilities in a public issue before maintainers can investigate; use GitHub's private vulnerability reporting flow where available.
 
 ## Project structure
 
 ```text
 algoforge/
 ├── app/
-│   ├── main.py                 # FastAPI APIs, models, auth, Judge0 orchestration
-│   ├── native_problems.py      # 19 original problems and 77 private/sample cases
-│   ├── seed_data.py            # 140 third-party metadata records
-│   └── static/                 # Single-page frontend, design system, images and favicon
-├── deploy/
-│   ├── Caddyfile
-│   └── JUDGE0_DEPLOYMENT.md
-├── docs/                       # Research, platform comparison and data licensing
-├── migrations/                 # Alembic migrations
-├── scripts/                    # Codeforces metadata importer
-├── tests/                       # API, auth, importer, judging, contest, analytics, drafts and compiled language harness tests
+│   ├── main.py                 # FastAPI API, database models, auth, Judge0 orchestration
+│   ├── native_problems.py      # Original problems and owned tests
+│   ├── seed_data.py            # Source-linked third-party metadata
+│   └── static/                 # Single-page frontend, styles, and app assets
+├── docs/
+│   ├── screenshots/            # README product screenshots
+│   └── ...                     # Licensing, Judge0, research, and operations docs
+├── migrations/                 # Alembic schema migrations
+├── scripts/                    # Catalogue import utilities
+├── tests/                      # API, auth, judging, analytics, importer, and harness tests
+├── deploy/                     # Caddy configuration
+├── .github/workflows/          # CI
 ├── Dockerfile
-├── run_local.ps1              # One-command Windows local setup and launch
 ├── docker-compose.yml
+├── run_local.ps1               # Windows development launcher
 ├── requirements.txt
-├── requirements-dev.txt
-└── .env.example
+└── requirements-dev.txt
 ```
 
-## API overview
+## Contributing and support
 
-- Authentication: `/api/auth/register`, `/api/auth/login`, `/api/auth/logout`, `/api/me`
-- Catalogue: `/api/problems`, `/api/problems/{slug}`, `/api/platforms`, `/api/patterns`, `/api/roadmaps`
-- User data: `/api/dashboard`, `/api/analytics`, `/api/achievements`, `/api/daily-challenge`, `/api/problems/{slug}/progress`, `/bookmark`, `/note`
-- Drafts: `/api/drafts/{problem_key}/{language}`, `/versions`, `/restore`
-- Playground: `/api/run`, `/api/run/{submission_id}`
-- Problem judging: `/api/problems/{slug}/submit`, `/api/problems/{slug}/run-custom`, `/api/submissions/{id}/judge`
-- Contests: `/api/contests`, `/api/contests/{slug}`, `/register`, `/leaderboard`
-- Community: `/api/problems/{slug}/discussions`, `/api/discussions/{id}/comments`, `/vote`, `/report`
-- Admin: `/api/admin/summary`, `/api/admin/problems`, `/api/admin/contests`, `/api/admin/discussion-reports`, `/api/admin/discussions/{id}/moderate`
-- Operations: `/api/health`, `/api/judge/health`, `/api/judge/languages`
-- SEO: `/robots.txt`, `/sitemap.xml`
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Include focused tests for behavior changes and avoid adding third-party problem content without a clear right to redistribute it.
 
-Interactive API documentation is available at `/api/docs` in development only. Public landing/legal pages are server-delivered, while most signed-in views are a client-rendered single-page application; this is **not full per-route server-side rendering**.
+- **Bugs and feature requests:** [GitHub Issues](https://github.com/KisholoyDD21/AlgoForge/issues)
+- **Security reports:** follow [SECURITY.md](SECURITY.md); use private reporting rather than a public issue.
+- **Repository:** [KisholoyDD21/AlgoForge](https://github.com/KisholoyDD21/AlgoForge)
 
-## Known launch requirements
+## License
 
-See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). In particular, this build has not had a live Judge0 integration test, real-world load test, independent security assessment or public-domain deployment. Email verification, password recovery, OAuth, notifications, external platform account sync, third-party analytics, fully server-rendered routes, broader 301 migration rules and legal review remain deployment/product work. Basic problem discussions, replies, votes, reports and admin moderation are implemented; advanced social features are not. Do not describe these as operational until implemented and tested.
+This repository currently has no `LICENSE` file. Until the project owner publishes one, do not assume that repository visibility grants permission to use, modify, or redistribute its code. Check dependency licenses separately.
