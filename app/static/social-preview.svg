@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#171824"/><stop offset="1" stop-color="#282544"/></linearGradient><radialGradient id="r"><stop stop-color="#7768ed" stop-opacity=".42"/><stop offset="1" stop-color="#7768ed" stop-opacity="0"/></radialGradient></defs>
+  <rect width="1200" height="630" fill="url(#g)"/><circle cx="970" cy="160" r="390" fill="url(#r)"/>
+  <g transform="translate(90 92)"><rect width="68" height="68" rx="20" fill="#7c6af2"/><path d="m14 50 17-36h7l17 36H43L34 28l-9 22z" fill="#fff"/><circle cx="52" cy="49" r="4" fill="#c9ff7a"/></g>
+  <text x="180" y="145" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="42" font-weight="700">AlgoForge</text>
+  <text x="90" y="315" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="76" font-weight="800">Build your</text>
+  <text x="90" y="405" fill="#c9c4ff" font-family="Inter,Arial,sans-serif" font-size="58" font-weight="800">problem-solving edge.</text>
+  <text x="94" y="478" fill="#b9b8c8" font-family="Inter,Arial,sans-serif" font-size="23">Pattern-first practice · Four languages · Progress that compounds</text>
+  <g transform="translate(930 300)" fill="none" stroke="#c9ff7a" stroke-width="3"><rect width="225" height="170" rx="20" stroke="#5e5a80"/><path d="M28 50h80M28 78h140M28 106h112M28 134h60" stroke-linecap="round"/><circle cx="175" cy="50" r="12" fill="#c9ff7a" stroke="none"/></g>
+</svg>
