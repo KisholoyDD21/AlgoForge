@@ -1,10 +1,66 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#171824"/><stop offset="1" stop-color="#282544"/></linearGradient><radialGradient id="r"><stop stop-color="#7768ed" stop-opacity=".42"/><stop offset="1" stop-color="#7768ed" stop-opacity="0"/></radialGradient></defs>
-  <rect width="1200" height="630" fill="url(#g)"/><circle cx="970" cy="160" r="390" fill="url(#r)"/>
-  <g transform="translate(90 92)"><rect width="68" height="68" rx="20" fill="#7c6af2"/><path d="m14 50 17-36h7l17 36H43L34 28l-9 22z" fill="#fff"/><circle cx="52" cy="49" r="4" fill="#c9ff7a"/></g>
-  <text x="180" y="145" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="42" font-weight="700">AlgoForge</text>
-  <text x="90" y="315" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="76" font-weight="800">Build your</text>
-  <text x="90" y="405" fill="#c9c4ff" font-family="Inter,Arial,sans-serif" font-size="58" font-weight="800">problem-solving edge.</text>
-  <text x="94" y="478" fill="#b9b8c8" font-family="Inter,Arial,sans-serif" font-size="23">Pattern-first practice · Four languages · Progress that compounds</text>
-  <g transform="translate(930 300)" fill="none" stroke="#c9ff7a" stroke-width="3"><rect width="225" height="170" rx="20" stroke="#5e5a80"/><path d="M28 50h80M28 78h140M28 106h112M28 134h60" stroke-linecap="round"/><circle cx="175" cy="50" r="12" fill="#c9ff7a" stroke="none"/></g>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d0e16"/>
+      <stop offset="100%" stop-color="#181928"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="72%" cy="18%" r="45%">
+      <stop offset="0%" stop-color="#7c6af2" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#7c6af2" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="12%" cy="82%" r="35%">
+      <stop offset="0%" stop-color="#c9ff7a" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#c9ff7a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="logoGrad" x1="0" y1="0" x2="68" y2="68" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7c6af2"/>
+      <stop offset="100%" stop-color="#4f3fd4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow1)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+
+  <!-- Logo mark -->
+  <g transform="translate(90 88)">
+    <rect width="72" height="72" rx="18" fill="url(#logoGrad)"/>
+    <rect width="72" height="72" rx="18" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+    <line x1="18" y1="54" x2="36" y2="15" stroke="white" stroke-width="5" stroke-linecap="round"/>
+    <line x1="54" y1="54" x2="36" y2="15" stroke="white" stroke-width="5" stroke-linecap="round"/>
+    <line x1="24" y1="38" x2="48" y2="38" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="36" cy="15" r="7" fill="#c9ff7a"/>
+    <circle cx="36" cy="15" r="3.5" fill="#1a2a0a"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="183" y="143" fill="white" font-family="Inter,Arial,sans-serif" font-size="44" font-weight="800" letter-spacing="-2">Algo</text>
+  <text x="280" y="143" fill="#b0a7ff" font-family="Inter,Arial,sans-serif" font-size="44" font-weight="800" letter-spacing="-2">Forge</text>
+  <text x="183" y="168" fill="#6a6c88" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="3">DSA WORKSPACE</text>
+
+  <!-- Headline -->
+  <text x="90" y="308" fill="white" font-family="Inter,Arial,sans-serif" font-size="78" font-weight="800" letter-spacing="-4">Build your</text>
+  <text x="90" y="398" fill="#b0a7ff" font-family="Inter,Arial,sans-serif" font-size="60" font-weight="800" letter-spacing="-3">problem-solving edge.</text>
+  <text x="90" y="470" fill="#8486a0" font-family="Inter,Arial,sans-serif" font-size="22">Pattern-first practice · Four languages · Progress that compounds</text>
+
+  <!-- Mock code card -->
+  <g transform="translate(920 270)">
+    <rect width="240" height="195" rx="16" fill="#13141e" stroke="#303250" stroke-width="1"/>
+    <!-- Traffic light dots -->
+    <circle cx="22" cy="22" r="5" fill="#ff6b74" opacity="0.8"/>
+    <circle cx="38" cy="22" r="5" fill="#f5c56b" opacity="0.8"/>
+    <circle cx="54" cy="22" r="5" fill="#6ed4a0" opacity="0.8"/>
+    <!-- Code lines -->
+    <rect x="18" y="44" width="90" height="7" rx="3.5" fill="#5c4ec2" opacity="0.8"/>
+    <rect x="18" y="60" width="150" height="6" rx="3" fill="#303050"/>
+    <rect x="18" y="74" width="120" height="6" rx="3" fill="#303050"/>
+    <rect x="18" y="88" width="100" height="6" rx="3" fill="#c9ff7a" opacity="0.5"/>
+    <rect x="18" y="102" width="160" height="6" rx="3" fill="#303050"/>
+    <rect x="18" y="116" width="80" height="6" rx="3" fill="#303050"/>
+    <rect x="18" y="130" width="130" height="6" rx="3" fill="#7c6af2" opacity="0.6"/>
+    <!-- Run button -->
+    <rect x="18" y="155" width="204" height="24" rx="7" fill="#7c6af2"/>
+    <text x="90" y="172" fill="white" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="800">Run code ▶</text>
+  </g>
 </svg>

@@ -204,8 +204,17 @@ async function api(path, options = {}) {
 function toast(message, kind = 'success') {
   const region = document.getElementById('toast-region');
   if (!region) return;
-  const node = document.createElement('div'); node.className = `toast ${kind}`; node.textContent = message;
-  region.appendChild(node); setTimeout(() => node.remove(), 3600);
+  const icons = { success: '✓', error: '✕', '': 'ℹ' };
+  const icon = icons[kind] ?? 'ℹ';
+  const node = document.createElement('div');
+  node.className = `toast ${kind}`;
+  node.innerHTML = `<span style="font-size:11px;font-weight:800;flex-shrink:0">${icon}</span><span>${String(message).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</span>`;
+  region.appendChild(node);
+  setTimeout(() => {
+    node.style.transition = 'opacity .25s, transform .25s';
+    node.style.opacity = '0'; node.style.transform = 'translateY(6px) scale(.96)';
+    setTimeout(() => node.remove(), 280);
+  }, 3400);
 }
 function escapeHtml(value = '') {
   return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -239,18 +248,67 @@ async function init() {
   document.addEventListener('input', onInput);
   document.addEventListener('change', onChange);
   document.addEventListener('submit', onSubmit);
+  mountKeyboardShortcuts();
   renderRoute();
   showCookieBanner();
 }
 
+/* ── KEYBOARD SHORTCUTS ─────────────────────────────────────────────────────
+   / .............. Focus search box
+   Escape ......... Close sidebar / blur search
+   G then D ........ Go to Dashboard
+   G then P ........ Go to Problems
+   G then T ........ Go to Patterns
+   G then A ........ Go to Analytics
+   G then C ........ Go to Playground (Code)
+   G then S ........ Go to Submissions
+   G then R ........ Go to Roadmap
+   G then X ........ Go to Profile
+   ───────────────────────────────────────────────────────────────────────── */
+function mountKeyboardShortcuts() {
+  let gPressed = false, gTimer = null;
+  const goRoutes = { d:'dashboard', p:'problems', t:'patterns', a:'analytics', c:'playground', s:'submissions', r:'roadmap', x:'profile' };
+  document.addEventListener('keydown', e => {
+    // Don't capture while typing in inputs
+    const tag = document.activeElement?.tagName;
+    const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement?.isContentEditable;
+    // '/' focuses search
+    if (e.key === '/' && !inInput) {
+      e.preventDefault();
+      document.getElementById('global-search')?.focus();
+      return;
+    }
+    // Escape blurs search / closes sidebar
+    if (e.key === 'Escape') {
+      const search = document.getElementById('global-search');
+      if (document.activeElement === search) { search.blur(); return; }
+      document.getElementById('sidebar')?.classList.remove('open');
+      return;
+    }
+    if (inInput) return;
+    // G-chord navigation
+    if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      gPressed = true;
+      clearTimeout(gTimer);
+      gTimer = setTimeout(() => { gPressed = false; }, 1200);
+      return;
+    }
+    if (gPressed) {
+      const dest = goRoutes[e.key.toLowerCase()];
+      if (dest) { e.preventDefault(); gPressed = false; clearTimeout(gTimer); setRoute(dest); }
+    }
+  });
+}
+
 function renderShell(content, page, title) {
   const groups = state.user?.role === 'admin' ? [...navGroups, { label: 'Administration', items: [['admin', 'Admin console', '⚙']] }] : navGroups;
-  const side = groups.map(group => `<div class="nav-label">${group.label}</div><div class="nav-list">${group.items.map(([key,label,icon]) => `<button class="nav-item ${page===key?'active':''}" data-nav="${key}"><span class="nav-icon">${icon}</span>${label}</button>`).join('')}</div>`).join('<div class="nav-spacer"></div>');
+  const navTips = { dashboard:'Overview (G then D)', problems:'Problem set (G then P)', patterns:'DSA Patterns (G then T)', analytics:'Analytics (G then A)', playground:'Playground (G then C)', submissions:'Submissions (G then S)', roadmap:'Learning paths', contests:'Contests', bookmarks:'Saved questions', profile:'Your profile', admin:'Admin console' };
+  const side = groups.map(group => `<div class="nav-label">${group.label}</div><div class="nav-list">${group.items.map(([key,label,icon]) => `<button class="nav-item ${page===key?'active':''}" data-nav="${key}" title="${navTips[key]||label}" aria-current="${page===key?'page':'false'}"><span class="nav-icon">${icon}</span>${label}</button>`).join('')}</div>`).join('<div class="nav-spacer"></div>');
   const name = state.user ? escapeHtml(state.user.display_name) : 'Guest mode';
   const email = state.user ? escapeHtml(state.user.email) : 'Sign in to sync your progress';
   return `<div class="app-shell">
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><div class="brand-mark">A<span>.</span></div><div class="brand-name">AlgoForge<small>DSA WORKSPACE</small></div></div>
+      <div class="brand"><div class="brand-mark"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 64 64" style="display:block"><line x1="16" y1="50" x2="32" y2="14" stroke="white" stroke-width="4.5" stroke-linecap="round"/><line x1="48" y1="50" x2="32" y2="14" stroke="white" stroke-width="4.5" stroke-linecap="round"/><line x1="21" y1="35" x2="43" y2="35" stroke="white" stroke-width="3.5" stroke-linecap="round"/><circle cx="32" cy="14" r="6" fill="#c9ff7a"/><circle cx="32" cy="14" r="3" fill="#1a2a0a"/></svg></div><div class="brand-name"><span style="color:var(--text)">Algo</span><span style="color:var(--accent2)">Forge</span><small>DSA WORKSPACE</small></div></div>
       ${side}
       <div class="sidebar-bottom">
         <div class="sidebar-card"><div class="mini-label">Build consistency</div><strong>One problem a day.</strong><p>Small repetitions compound into strong problem-solving instincts.</p><button data-nav="problems">Find a problem <span aria-hidden="true">↗</span></button></div>
@@ -544,12 +602,12 @@ function renderAuth(page) {
   state.authMode = page === 'register' ? 'register' : 'login';
   document.title = `${page==='register'?'Create account':'Sign in'} — AlgoForge`;
   const isRegister = state.authMode === 'register';
-  document.getElementById('app-root').innerHTML = `<div class="auth-screen"><section class="auth-art"><div class="brand"><div class="brand-mark">A<span>.</span></div><div class="brand-name">AlgoForge<small>DSA WORKSPACE</small></div></div><div><div class="eyebrow">PRACTICE WITH INTENTION</div><h1>Strong fundamentals. <em style="color:#b7adff">Sharper thinking.</em></h1><p>Build a repeatable problem-solving habit with pattern-first practice, a focused coding workspace and progress you can actually understand.</p></div><div class="quote">“First understand the pattern. Then earn the speed.”</div></section><section class="auth-side"><form class="auth-card" id="auth-form"><div class="eyebrow">${isRegister?'GET STARTED':'WELCOME BACK'}</div><h2>${isRegister?'Create your account':'Sign in to AlgoForge'}</h2><p>${isRegister?'Save notes, bookmarks and your practice streak.':'Pick up your practice where you left off.'}</p>${isRegister?`<div class="field"><label for="display-name">Display name</label><input id="display-name" name="display_name" autocomplete="name" minlength="2" maxlength="80" required placeholder="Your name"></div>`:''}<div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com"></div><div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="${isRegister?'new-password':'current-password'}" minlength="${isRegister?10:1}" required placeholder="${isRegister?'At least 10 characters':'Your password'}"></div><div class="auth-error" id="auth-error"></div><button class="btn primary" type="submit">${isRegister?'Create account':'Sign in'} <span>→</span></button>${!isRegister?`<button type="button" class="btn" data-action="demo-login" style="width:100%;margin-top:8px">Use local demo account</button>`:''}<div class="auth-switch">${isRegister?'Already have an account?':'New to AlgoForge?'} <button type="button" class="text-button" data-action="auth-switch">${isRegister?'Sign in':'Create an account'}</button></div><div class="auth-switch"><a href="#/privacy">Privacy</a> · <a href="#/terms">Terms</a> · <button type="button" class="text-button" data-nav="welcome">Back to home</button></div></form></section></div>`;
+  document.getElementById('app-root').innerHTML = `<div class="auth-screen"><section class="auth-art"><div class="brand"><div class="brand-mark"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 64 64" style="display:block"><line x1="16" y1="50" x2="32" y2="14" stroke="white" stroke-width="4.5" stroke-linecap="round"/><line x1="48" y1="50" x2="32" y2="14" stroke="white" stroke-width="4.5" stroke-linecap="round"/><line x1="21" y1="35" x2="43" y2="35" stroke="white" stroke-width="3.5" stroke-linecap="round"/><circle cx="32" cy="14" r="6" fill="#c9ff7a"/><circle cx="32" cy="14" r="3" fill="#1a2a0a"/></svg></div><div class="brand-name"><span style="color:var(--text)">Algo</span><span style="color:var(--accent2)">Forge</span><small>DSA WORKSPACE</small></div></div><div><div class="eyebrow">PRACTICE WITH INTENTION</div><h1>Strong fundamentals. <em style="color:#b7adff">Sharper thinking.</em></h1><p>Build a repeatable problem-solving habit with pattern-first practice, a focused coding workspace and progress you can actually understand.</p></div><div class="quote">“First understand the pattern. Then earn the speed.”</div></section><section class="auth-side"><form class="auth-card" id="auth-form"><div class="eyebrow">${isRegister?'GET STARTED':'WELCOME BACK'}</div><h2>${isRegister?'Create your account':'Sign in to AlgoForge'}</h2><p>${isRegister?'Save notes, bookmarks and your practice streak.':'Pick up your practice where you left off.'}</p>${isRegister?`<div class="field"><label for="display-name">Display name</label><input id="display-name" name="display_name" autocomplete="name" minlength="2" maxlength="80" required placeholder="Your name"></div>`:''}<div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com"></div><div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="${isRegister?'new-password':'current-password'}" minlength="${isRegister?10:1}" required placeholder="${isRegister?'At least 10 characters':'Your password'}"></div><div class="auth-error" id="auth-error"></div><button class="btn primary" type="submit">${isRegister?'Create account':'Sign in'} <span>→</span></button>${!isRegister?`<button type="button" class="btn" data-action="demo-login" style="width:100%;margin-top:8px">Use local demo account</button>`:''}<div class="auth-switch">${isRegister?'Already have an account?':'New to AlgoForge?'} <button type="button" class="text-button" data-action="auth-switch">${isRegister?'Sign in':'Create an account'}</button></div><div class="auth-switch"><a href="#/privacy">Privacy</a> · <a href="#/terms">Terms</a> · <button type="button" class="text-button" data-nav="welcome">Back to home</button></div></form></section></div>`;
 }
 
 function renderLanding() {
   document.title = 'AlgoForge — Build your problem-solving edge';
-  document.getElementById('app-root').innerHTML = `<div class="public-home"><nav class="public-nav"><div class="brand" style="padding:0"><div class="brand-mark">A<span>.</span></div><div class="brand-name">AlgoForge<small>DSA WORKSPACE</small></div></div><div class="public-nav-links"><a href="#features" data-scroll="features">Features</a><a href="#/problems">Problem set</a><a href="#/roadmap">Learning paths</a><button class="btn" data-action="login">Sign in</button></div></nav><section class="hero"><div><div class="eyebrow">A BETTER WAY TO PRACTISE DSA</div><h1>Build your <em>problem-solving edge.</em></h1><p>A focused workspace for mastering data structures and algorithms. Learn reusable patterns, practise across curated problem links, run code in four languages and keep a clear record of your progress.</p><div class="hero-actions"><button class="btn primary" data-nav="problems">Start practising <span>↗</span></button><button class="btn" data-nav="roadmap">Explore the roadmap</button></div><div class="hero-proof"><span>Pattern-first learning</span><span>C · C++ · Java · Python</span><span>Progress tracking</span></div></div><div class="hero-visual"><div class="visual-top"><div class="visual-dots"><i></i><i></i><i></i></div><span>algoforge / overview</span><span>DESIGN PREVIEW</span></div><div class="mock-dashboard"><div class="mock-stats"><div class="mock-stat"><small>Questions solved</small><b>—</b></div><div class="mock-stat"><small>Current streak</small><b>—</b></div><div class="mock-stat"><small>Patterns explored</small><b>—</b></div></div><div class="mock-chart"><small style="color:#9c9eb1;font-size:8px">ILLUSTRATIVE ACTIVITY PREVIEW</small><div class="mock-bars">${[24,45,34,58,75,39,62,86,53,67,43,78,57,91,62,75].map(x=>`<i style="height:${x}%"></i>`).join('')}</div></div><div class="mock-problem"><small style="color:#9c9eb1;font-size:8px">CONTINUE LEARNING</small><div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px"><b style="font-size:10px">Learn a DSA pattern</b><span style="font-size:8px;color:#c9ff7a">Pattern guide</span></div><div class="mock-line"></div><div class="mock-line short"></div></div></div></div></section><section class="feature-band" id="features"><div class="eyebrow">EVERYTHING IN ONE WORKSPACE</div><h2 style="font-size:23px;letter-spacing:-.04em;margin:7px 0 20px">Practise with structure. Improve with feedback.</h2><div class="feature-grid"><article class="feature-tile"><div class="pattern-icon">⌘</div><h3>Pattern-first problem set</h3><p>Filter by difficulty, topic, primary pattern and original platform source.</p></article><article class="feature-tile"><div class="pattern-icon">▣</div><h3>Four-language workspace</h3><p>Write and run C, C++, Java or Python through an isolated Judge0 service.</p></article><article class="feature-tile"><div class="pattern-icon">⌁</div><h3>Complexity feedback</h3><p>Compare an estimated code pattern with known target complexity and measured runtime.</p></article><article class="feature-tile"><div class="pattern-icon">◉</div><h3>Practice history</h3><p>Track external completions, bookmarks, personal notes and activity streaks.</p></article><article class="feature-tile"><div class="pattern-icon">↗</div><h3>Structured learning paths</h3><p>Move from fundamentals to graphs, dynamic programming and competitive programming.</p></article><article class="feature-tile"><div class="pattern-icon">☆</div><h3>A personal revision list</h3><p>Save problems and revisit concepts that need another pass.</p></article><article class="feature-tile"><div class="pattern-icon">◎</div><h3>Problem discussions</h3><p>Ask questions, share reasoning, reply to learners and surface useful explanations.</p></article><article class="feature-tile"><div class="pattern-icon">◷</div><h3>Scheduled contests</h3><p>Join timed practice contests with server-checked access and scoreboards.</p></article></div></section><footer class="site-footer"><span>© ${new Date().getFullYear()} AlgoForge. An independent learning workspace.</span><span><a href="#/privacy">Privacy</a> · <a href="#/terms">Terms</a> · <a href="#/dashboard">Open app</a></span></footer></div>`;
+  document.getElementById('app-root').innerHTML = `<div class="public-home"><nav class="public-nav"><div class="brand" style="padding:0"><div class="brand-mark"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 64 64" style="display:block"><line x1="16" y1="50" x2="32" y2="14" stroke="white" stroke-width="4.5" stroke-linecap="round"/><line x1="48" y1="50" x2="32" y2="14" stroke="white" stroke-width="4.5" stroke-linecap="round"/><line x1="21" y1="35" x2="43" y2="35" stroke="white" stroke-width="3.5" stroke-linecap="round"/><circle cx="32" cy="14" r="6" fill="#c9ff7a"/><circle cx="32" cy="14" r="3" fill="#1a2a0a"/></svg></div><div class="brand-name"><span style="color:var(--text)">Algo</span><span style="color:var(--accent2)">Forge</span><small>DSA WORKSPACE</small></div></div><div class="public-nav-links"><a href="#features" data-scroll="features">Features</a><a href="#/problems">Problem set</a><a href="#/roadmap">Learning paths</a><button class="btn" data-action="login">Sign in</button></div></nav><section class="hero"><div><div class="eyebrow">A BETTER WAY TO PRACTISE DSA</div><h1>Build your <em>problem-solving edge.</em></h1><p>A focused workspace for mastering data structures and algorithms. Learn reusable patterns, practise across curated problem links, run code in four languages and keep a clear record of your progress.</p><div class="hero-actions"><button class="btn primary" data-nav="problems">Start practising <span>↗</span></button><button class="btn" data-nav="roadmap">Explore the roadmap</button></div><div class="hero-proof"><span>Pattern-first learning</span><span>C · C++ · Java · Python</span><span>Progress tracking</span></div></div><div class="hero-visual"><div class="visual-top"><div class="visual-dots"><i></i><i></i><i></i></div><span>algoforge / overview</span><span>DESIGN PREVIEW</span></div><div class="mock-dashboard"><div class="mock-stats"><div class="mock-stat"><small>Questions solved</small><b>—</b></div><div class="mock-stat"><small>Current streak</small><b>—</b></div><div class="mock-stat"><small>Patterns explored</small><b>—</b></div></div><div class="mock-chart"><small style="color:#9c9eb1;font-size:8px">ILLUSTRATIVE ACTIVITY PREVIEW</small><div class="mock-bars">${[24,45,34,58,75,39,62,86,53,67,43,78,57,91,62,75].map(x=>`<i style="height:${x}%"></i>`).join('')}</div></div><div class="mock-problem"><small style="color:#9c9eb1;font-size:8px">CONTINUE LEARNING</small><div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px"><b style="font-size:10px">Learn a DSA pattern</b><span style="font-size:8px;color:#c9ff7a">Pattern guide</span></div><div class="mock-line"></div><div class="mock-line short"></div></div></div></div></section><section class="feature-band" id="features"><div class="eyebrow">EVERYTHING IN ONE WORKSPACE</div><h2 style="font-size:23px;letter-spacing:-.04em;margin:7px 0 20px">Practise with structure. Improve with feedback.</h2><div class="feature-grid"><article class="feature-tile"><div class="pattern-icon">⌘</div><h3>Pattern-first problem set</h3><p>Filter by difficulty, topic, primary pattern and original platform source.</p></article><article class="feature-tile"><div class="pattern-icon">▣</div><h3>Four-language workspace</h3><p>Write and run C, C++, Java or Python through an isolated Judge0 service.</p></article><article class="feature-tile"><div class="pattern-icon">⌁</div><h3>Complexity feedback</h3><p>Compare an estimated code pattern with known target complexity and measured runtime.</p></article><article class="feature-tile"><div class="pattern-icon">◉</div><h3>Practice history</h3><p>Track external completions, bookmarks, personal notes and activity streaks.</p></article><article class="feature-tile"><div class="pattern-icon">↗</div><h3>Structured learning paths</h3><p>Move from fundamentals to graphs, dynamic programming and competitive programming.</p></article><article class="feature-tile"><div class="pattern-icon">☆</div><h3>A personal revision list</h3><p>Save problems and revisit concepts that need another pass.</p></article><article class="feature-tile"><div class="pattern-icon">◎</div><h3>Problem discussions</h3><p>Ask questions, share reasoning, reply to learners and surface useful explanations.</p></article><article class="feature-tile"><div class="pattern-icon">◷</div><h3>Scheduled contests</h3><p>Join timed practice contests with server-checked access and scoreboards.</p></article></div></section><footer class="site-footer"><span>© ${new Date().getFullYear()} AlgoForge. An independent learning workspace.</span><span><a href="#/privacy">Privacy</a> · <a href="#/terms">Terms</a> · <a href="#/dashboard">Open app</a></span></footer></div>`;
 }
 
 function renderPolicy(page) {
@@ -1030,9 +1088,33 @@ document.addEventListener('click', event => {
   if (event.target.closest('[data-action="save-note"]')) saveNote();
 });
 
-// Small theme override for the light option.
+// Small theme override for the light option — supplements the CSS :root block.
 const lightCss = document.createElement('style');
-lightCss.textContent = `body.light{--bg:#f4f5fa;--panel:#fff;--panel2:#f8f8fc;--panel3:#eff0f7;--border:#e2e3ed;--border2:#cfd1df;--text:#202131;--muted:#73768b;--soft:#45485b;--shadow:0 18px 50px rgba(25,25,45,.1)}body.light .sidebar{background:#fff}body.light .topbar{background:rgba(255,255,255,.91)}body.light .searchbox,body.light .icon-btn,body.light .filter-select,body.light .filter-input,body.light .lang-select{background:#f5f5fa;color:#34364a}body.light .nav-item{color:#5f6275}body.light .nav-item.active{background:#efedff;color:#594ac3}body.light .heat-cell{background:#edf0f6}body.light .problem-table tr:hover td{background:#f6f6fb}body.light .problem-table th{background:#f6f6fa}body.light .editor-container,body.light .code-fallback,body.light .stdin-area,body.light .output-box{background:#f7f7fb;color:#282a3b}body.light .mock-dashboard{background:#fafaff}body.light .panel,body.light .stat-card,body.light .continue-card,body.light .pattern-card,body.light .roadmap-card{background:#fff}body.light .public-home{background:#f4f5fa}body.light .auth-screen{background:#f4f5fa}body.light .auth-art{background:#e9e7fa}body.light .auth-side{background:#f7f7fb}body.light .auth-card input{background:#fff;color:#222}body.light .problem-detail{background:#fff}body.light .editor-card{background:#fff}body.light .console{background:#fff}`;
+lightCss.textContent = `
+body.light{--bg:#f4f5fa;--panel:#fff;--panel2:#f8f8fc;--panel3:#eff0f7;--border:#e2e3ed;--border2:#cfd1df;--text:#202131;--muted:#73768b;--soft:#45485b;--shadow:0 18px 50px rgba(25,25,45,.1)}
+body.light .sidebar{background:linear-gradient(180deg,#f5f6fc 0%,#f0f1f8 100%);border-right-color:#e2e3ed}
+body.light .topbar{background:rgba(244,245,250,.92)}
+body.light .searchbox,body.light .filter-select,body.light .filter-input,body.light .lang-select{background:#f5f5fa;color:#34364a;border-color:#cfd1df}
+body.light .icon-btn{background:#f5f5fa;border-color:#cfd1df;color:#45485b}
+body.light .nav-item{color:#5f6275}
+body.light .nav-item:hover{background:rgba(0,0,0,.04);color:#202131}
+body.light .nav-item.active{background:#efedff;color:#594ac3;box-shadow:inset 3px 0 0 #594ac3}
+body.light .heat-cell{background:#edf0f6}
+body.light .problem-table tr:hover td{background:#f6f6fb}
+body.light .problem-table th{background:#f6f6fa}
+body.light .editor-container,body.light .code-fallback,body.light .stdin-area,body.light .output-box,body.light .custom-test-cases{background:#1a1b2c;color:#e6e6f5}
+body.light .console-body{background:#161722}
+body.light .mock-dashboard{background:#fafaff}
+body.light .panel,body.light .stat-card,body.light .continue-card,body.light .pattern-card,body.light .roadmap-card{background:#fff}
+body.light .public-home{background:#f4f5fa}
+body.light .auth-screen{background:#f4f5fa}
+body.light .auth-art{background:linear-gradient(140deg,#e8e6f8,#dcdaf2)}
+body.light .auth-side{background:#f7f7fb}
+body.light .problem-detail{background:#fff}
+body.light .editor-card{background:#fff;border-color:#e2e3ed}
+body.light .editor-toolbar,body.light .editor-footer,body.light .console-head,body.light .run-footer,body.light .custom-test-toolbar{background:#f5f5fa}
+`.replace(/\n/g,' ');
+document.head.appendChild(lightCss);
 document.head.appendChild(lightCss);
 
 init();

@@ -1,5 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="18" fill="#7c6af2"/>
-  <path d="M13 47 28 14h8l15 33H40l-8-19-8 19z" fill="#fff"/>
-  <circle cx="48" cy="47" r="4" fill="#c9ff7a"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7c6af2"/>
+      <stop offset="100%" stop-color="#4f3fd4"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="64" height="64" rx="16" fill="url(#bg)"/>
+  <!-- Subtle inner glow ring -->
+  <rect width="64" height="64" rx="16" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <!-- Graph edges (the A legs become edges) -->
+  <line x1="16" y1="50" x2="32" y2="14" stroke="white" stroke-width="4.5" stroke-linecap="round" opacity="0.95"/>
+  <line x1="48" y1="50" x2="32" y2="14" stroke="white" stroke-width="4.5" stroke-linecap="round" opacity="0.95"/>
+  <line x1="21" y1="35" x2="43" y2="35" stroke="white" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+  <!-- Bottom-left node -->
+  <circle cx="16" cy="50" r="3.5" fill="rgba(255,255,255,0.7)"/>
+  <!-- Bottom-right node -->
+  <circle cx="48" cy="50" r="3.5" fill="rgba(255,255,255,0.7)"/>
+  <!-- Apex node — lime accent, the key brand element -->
+  <circle cx="32" cy="14" r="6" fill="#c9ff7a" filter="url(#glow)"/>
+  <circle cx="32" cy="14" r="3" fill="#1a2a0a"/>
 </svg>
