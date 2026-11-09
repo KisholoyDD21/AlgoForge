@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use AlgoForge in academic or educational work, please cite this software."
+title: "AlgoForge"
+version: "0.8.0"
+date-released: "2026-11-03"
+license: MIT
+type: software
+abstract: >-
+  An independent, pattern-first data structures and algorithms practice
+  platform with an original judged problem track, a multi-language coding
+  workspace, learning analytics, and source-attributed problem discovery.

@@ -1,0 +1,28 @@
+# Environment and secrets
+.env*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local databases and runtime data
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# Coverage and build artifacts
+coverage.xml
+htmlcov/
+dist/
+build/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,36 @@
+name: Feature request
+description: Propose a product or engineering improvement.
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What user need or workflow is currently unsupported?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Product area
+      options:
+        - Coding workspace / judge
+        - DSA catalogue / learning
+        - Analytics / progress
+        - Contests / community
+        - Security / operations
+        - UI / accessibility
+        - Documentation
+    validations:
+      required: true

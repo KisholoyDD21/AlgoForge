@@ -1,0 +1,36 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Compile Python sources
+        run: python -m compileall -q app scripts migrations
+      - name: Verify clean database migrations
+        env:
+          DATABASE_URL: sqlite:////tmp/algoforge-ci-migration.db
+        run: alembic upgrade head
+      - name: Install Chromium for browser regression tests
+        run: python -m playwright install --with-deps chromium
+      - name: Run tests
+        run: pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check frontend JavaScript syntax
+        run: node --check app/static/app.js

@@ -1,0 +1,125 @@
+from __future__ import annotations
+
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+from app.main import _function_supported, _wrap_function_solution
+
+
+CASES = {
+    "af-running-sum": {
+        "stdin": "5\n1 2 3 4 5\n",
+        "expected": "1 3 6 10 15",
+        "cpp": "class Solution { public: vector<long long> runningSum(vector<int>& nums) { vector<long long> out; long long sum=0; for(int x:nums){sum+=x;out.push_back(sum);} return out; } };",
+        "java": "class Solution { public long[] runningSum(int[] nums) { long[] out=new long[nums.length]; long sum=0; for(int i=0;i<nums.length;i++){sum+=nums[i];out[i]=sum;} return out; } }",
+        "python": "from typing import List\nclass Solution:\n def runningSum(self, nums: List[int]) -> List[int]:\n  out=[]; total=0\n  for value in nums:\n   total += value; out.append(total)\n  return out\n",
+        "c": "long long* runningSum(int* nums,int numsSize,int* returnSize){long long* out=malloc(sizeof(long long)*(size_t)numsSize);long long sum=0;for(int i=0;i<numsSize;i++){sum+=nums[i];out[i]=sum;}*returnSize=numsSize;return out;}",
+    },
+    "af-maximum-pair-sum": {
+        "stdin": "5\n4 1 7 3 6\n",
+        "expected": "13",
+        "cpp": "class Solution { public: long long maxPairSum(vector<int>& nums) { sort(nums.begin(),nums.end(),greater<int>()); return (long long)nums[0]+nums[1]; } };",
+        "java": "class Solution { public long maxPairSum(int[] nums) { Arrays.sort(nums); return (long)nums[nums.length-1]+nums[nums.length-2]; } }",
+        "python": "from typing import List\nclass Solution:\n def maxPairSum(self, nums: List[int]) -> int:\n  nums.sort(reverse=True); return nums[0]+nums[1]\n",
+        "c": "long long maxPairSum(int* nums,int numsSize){int a=nums[0],b=nums[1];if(a<b){int t=a;a=b;b=t;}for(int i=2;i<numsSize;i++){if(nums[i]>a){b=a;a=nums[i];}else if(nums[i]>b)b=nums[i];}return (long long)a+b;}",
+    },
+    "af-binary-search-index": {
+        "stdin": "6\n-4 0 3 8 10 14\n8\n",
+        "expected": "3",
+        "cpp": "class Solution { public: int search(vector<int>& nums,int target){int l=0,r=(int)nums.size()-1;while(l<=r){int m=l+(r-l)/2;if(nums[m]==target)return m;if(nums[m]<target)l=m+1;else r=m-1;}return -1;} };",
+        "java": "class Solution { public int search(int[] nums,int target){int l=0,r=nums.length-1;while(l<=r){int m=l+(r-l)/2;if(nums[m]==target)return m;if(nums[m]<target)l=m+1;else r=m-1;}return -1;} }",
+        "python": "from typing import List\nclass Solution:\n def search(self, nums: List[int], target: int) -> int:\n  lo,hi=0,len(nums)-1\n  while lo<=hi:\n   mid=lo+(hi-lo)//2\n   if nums[mid]==target:return mid\n   if nums[mid]<target:lo=mid+1\n   else:hi=mid-1\n  return -1\n",
+        "c": "int search(int* nums,int numsSize,int target){int l=0,r=numsSize-1;while(l<=r){int m=l+(r-l)/2;if(nums[m]==target)return m;if(nums[m]<target)l=m+1;else r=m-1;}return -1;}",
+    },
+    "af-valid-parentheses": {
+        "stdin": "{[()]()}\n", "expected": "YES",
+        "cpp": "class Solution { public: bool isValid(string s){ stack<char> st; for(char c:s){ if(c=='('||c=='['||c=='{') st.push(c); else { if(st.empty()) return false; char o=st.top(); st.pop(); if((c==')'&&o!='(')||(c==']'&&o!='[')||(c=='}'&&o!='{')) return false; } } return st.empty(); } };",
+        "java": "class Solution { public boolean isValid(String s){ Deque<Character> st=new ArrayDeque<>(); for(char c:s.toCharArray()){ if(c=='('||c=='['||c=='{') st.push(c); else { if(st.isEmpty()) return false; char o=st.pop(); if((c==')'&&o!='(')||(c==']'&&o!='[')||(c=='}'&&o!='{')) return false; } } return st.isEmpty(); } }",
+        "python": "class Solution:\n def isValid(self,s: str)->bool:\n  st=[]; pairs={')':'(',']':'[','}':'{'}\n  for c in s:\n   if c in '([{': st.append(c)\n   elif not st or st.pop()!=pairs[c]: return False\n  return not st\n",
+        "c": "int isValid(char* s){char st[200005];int top=0;for(int i=0;s[i];i++){char c=s[i];if(c=='('||c=='['||c=='{')st[top++]=c;else{if(!top)return 0;char o=st[--top];if((c==')'&&o!='(')||(c==']'&&o!='[')||(c=='}'&&o!='{'))return 0;}}return top==0;}",
+    },
+    "af-maximum-subarray": {
+        "stdin": "9\n-2 1 -3 4 -1 2 1 -5 4\n", "expected": "6",
+        "cpp": "class Solution { public: long long maxSubArray(vector<int>& nums){long long cur=nums[0],best=nums[0];for(size_t i=1;i<nums.size();i++){cur=max((long long)nums[i],cur+nums[i]);best=max(best,cur);}return best;} };",
+        "java": "class Solution { public long maxSubArray(int[] nums){long cur=nums[0],best=nums[0];for(int i=1;i<nums.length;i++){cur=Math.max((long)nums[i],cur+nums[i]);best=Math.max(best,cur);}return best;} }",
+        "python": "from typing import List\nclass Solution:\n def maxSubArray(self,nums: List[int])->int:\n  cur=best=nums[0]\n  for x in nums[1:]: cur=max(x,cur+x); best=max(best,cur)\n  return best\n",
+        "c": "long long maxSubArray(int* a,int n){long long cur=a[0],best=a[0];for(int i=1;i<n;i++){long long x=a[i];cur=x>cur+x?x:cur+x;if(cur>best)best=cur;}return best;}",
+    },
+    "af-longest-unique-substring": {
+        "stdin": "abcabcbb\n", "expected": "3",
+        "cpp": "class Solution { public: int lengthOfLongestSubstring(string s){int last[256];fill(last,last+256,-1);int left=0,best=0;for(int i=0;i<(int)s.size();i++){unsigned char c=s[i];if(last[c]>=left)left=last[c]+1;last[c]=i;best=max(best,i-left+1);}return best;} };",
+        "java": "class Solution { public int lengthOfLongestSubstring(String s){int[] last=new int[128];Arrays.fill(last,-1);int left=0,best=0;for(int i=0;i<s.length();i++){char c=s.charAt(i);if(last[c]>=left)left=last[c]+1;last[c]=i;best=Math.max(best,i-left+1);}return best;} }",
+        "python": "class Solution:\n def lengthOfLongestSubstring(self,s: str)->int:\n  last={}; left=best=0\n  for i,c in enumerate(s):\n   if c in last and last[c]>=left: left=last[c]+1\n   last[c]=i; best=max(best,i-left+1)\n  return best\n",
+        "c": "int lengthOfLongestSubstring(char* s){int last[128];for(int i=0;i<128;i++)last[i]=-1;int left=0,best=0;for(int i=0;s[i];i++){unsigned char c=(unsigned char)s[i];if(c<128&&last[c]>=left)left=last[c]+1;if(c<128)last[c]=i;int len=i-left+1;if(len>best)best=len;}return best;}",
+    },
+    "af-missing-number": {
+        "stdin": "4\n3 0 1 4\n",
+        "expected": "2",
+        "cpp": "class Solution { public: int missingNumber(vector<int>& nums){int x=(int)nums.size();for(int i=0;i<(int)nums.size();i++)x^=i^nums[i];return x;} };",
+        "java": "class Solution { public int missingNumber(int[] nums){int x=nums.length;for(int i=0;i<nums.length;i++)x^=i^nums[i];return x;} }",
+        "python": "from typing import List\nclass Solution:\n def missingNumber(self, nums: List[int]) -> int:\n  x=len(nums)\n  for i,value in enumerate(nums): x ^= i ^ value\n  return x\n",
+        "c": "int missingNumber(int* nums,int numsSize){int x=numsSize;for(int i=0;i<numsSize;i++)x^=i^nums[i];return x;}",
+    },
+}
+
+
+@pytest.mark.parametrize("slug", list(CASES))
+@pytest.mark.parametrize("language", ["cpp", "c", "java", "python"])
+def test_function_signature_adapter_executes(slug: str, language: str, tmp_path: Path):
+    """Compile and execute the generated LeetCode-style harness for each supported stack."""
+    assert _function_supported(slug, "function")
+    source = _wrap_function_solution(slug, language, CASES[slug][language])
+    # Match the language prelude generated by the editor starter templates.
+    if language == "cpp":
+        source = "#include <bits/stdc++.h>\nusing namespace std;\n" + source
+    elif language == "c":
+        source = "#include <stdio.h>\n#include <stdlib.h>\n" + source
+    elif language == "java":
+        source = "import java.util.*;\n" + source
+    stdin = CASES[slug]["stdin"]
+    expected = CASES[slug]["expected"]
+
+    if language == "python":
+        result = subprocess.run([sys.executable, "-c", source], input=stdin, text=True, capture_output=True, timeout=5)
+    elif language == "cpp":
+        compiler = shutil.which("g++")
+        if not compiler:
+            pytest.skip("g++ is not installed")
+        src, binary = tmp_path / "main.cpp", tmp_path / "main"
+        src.write_text(source)
+        built = subprocess.run([compiler, "-std=c++17", "-O2", str(src), "-o", str(binary)], text=True, capture_output=True, timeout=20)
+        assert built.returncode == 0, built.stderr
+        result = subprocess.run([str(binary)], input=stdin, text=True, capture_output=True, timeout=5)
+    elif language == "c":
+        compiler = shutil.which("gcc")
+        if not compiler:
+            pytest.skip("gcc is not installed")
+        src, binary = tmp_path / "main.c", tmp_path / "main"
+        src.write_text(source)
+        built = subprocess.run([compiler, "-std=c11", "-O2", str(src), "-o", str(binary)], text=True, capture_output=True, timeout=20)
+        assert built.returncode == 0, built.stderr
+        result = subprocess.run([str(binary)], input=stdin, text=True, capture_output=True, timeout=5)
+    else:
+        compiler, runtime = shutil.which("javac"), shutil.which("java")
+        if not compiler or not runtime:
+            pytest.skip("JDK is not installed")
+        src = tmp_path / "Main.java"
+        src.write_text(source)
+        built = subprocess.run([compiler, str(src)], cwd=tmp_path, text=True, capture_output=True, timeout=20)
+        assert built.returncode == 0, built.stderr
+        result = subprocess.run([runtime, "-cp", str(tmp_path), "Main"], input=stdin, text=True, capture_output=True, timeout=5)
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == expected
+
+
+def test_function_mode_is_not_enabled_for_third_party_or_unconfigured_originals():
+    assert not _function_supported("leetcode-two-sum", "function")
+    assert _function_supported("af-maximum-subarray", "function")
+    assert _function_supported("af-valid-parentheses", "function")
+    assert _function_supported("af-longest-unique-substring", "function")
+    assert _function_supported("af-maximum-subarray", "stdin")

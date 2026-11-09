@@ -1,0 +1,20 @@
+{
+  "total": 159,
+  "difficulty_counts": {
+    "Easy": 59,
+    "Medium": 79,
+    "Hard": 21
+  },
+  "platform_counts": {
+    "AlgoForge Originals": 19,
+    "AtCoder": 4,
+    "CSES Problem Set": 16,
+    "CodeChef": 3,
+    "Codeforces": 10,
+    "HackerRank": 5,
+    "LeetCode": 102
+  },
+  "error_count": 0,
+  "warning_count": 0,
+  "issues": []
+}
